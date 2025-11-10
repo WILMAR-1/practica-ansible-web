@@ -1,0 +1,12 @@
+FROM python:3.11-alpine
+
+# Instalar dependencias necesarias
+RUN apk add --no-cache \
+    openssh-client \
+    sshpass \
+    git \
+    && pip install --no-cache-dir ansible
+
+WORKDIR /ansible
+
+CMD ["ansible", "--version"]

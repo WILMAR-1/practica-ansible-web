@@ -10,8 +10,9 @@ Automatizar la instalación de nginx en múltiples "servidores" simulados con Do
 
 - Docker
 - Docker Compose
-- Ansible
 - Git
+
+**Nota:** No necesitas instalar Ansible localmente. Puedes ejecutarlo desde Docker usando los scripts proporcionados.
 
 ## Estructura del Proyecto
 
@@ -19,8 +20,11 @@ Automatizar la instalación de nginx en múltiples "servidores" simulados con Do
 practica-ansible-web/
 ├── Dockerfile              # Imagen base para los contenedores
 ├── docker-compose.yml      # Define los servicios node1 y node2
-├── inventory.ini           # Inventario de Ansible con los hosts
+├── inventory.ini           # Inventario para Ansible instalado localmente
+├── inventory-docker.ini    # Inventario para Ansible en Docker
 ├── playbook.yml            # Playbook de Ansible para configurar nginx
+├── ansible.ps1             # Script PowerShell para ejecutar Ansible con Docker
+├── ansible.sh              # Script Bash para ejecutar Ansible con Docker
 └── site/
     └── index.html          # Página web personalizada
 ```
@@ -35,39 +39,62 @@ docker compose up --build -d
 
 Esto creará y levantará dos contenedores (node1 y node2) que simulan servidores con SSH habilitado.
 
-### 2. Verificar conexión con Ansible
+### 2. Ejecutar Ansible
 
-```bash
-ansible -i inventory.ini all -m ping
+Tienes dos opciones para ejecutar Ansible:
+
+#### Opción A: Usando Docker (Recomendado para Windows)
+
+**En PowerShell:**
+```powershell
+# Verificar conexión
+.\ansible.ps1 -- ansible -i inventory-docker.ini all -m ping
+
+# Ejecutar playbook
+.\ansible.ps1 -- ansible-playbook -i inventory-docker.ini playbook.yml
 ```
 
-Deberías ver una respuesta exitosa de ambos nodos.
+**En Git Bash o WSL:**
+```bash
+# Dar permisos de ejecución (solo primera vez)
+chmod +x ansible.sh
 
-### 3. Ejecutar el playbook
+# Verificar conexión
+./ansible.sh ansible -i inventory-docker.ini all -m ping
+
+# Ejecutar playbook
+./ansible.sh ansible-playbook -i inventory-docker.ini playbook.yml
+```
+
+#### Opción B: Con Ansible instalado localmente
 
 ```bash
+# Verificar conexión
+ansible -i inventory.ini all -m ping
+
+# Ejecutar playbook
 ansible-playbook -i inventory.ini playbook.yml
 ```
 
-Este playbook realizará las siguientes tareas:
+El playbook realizará las siguientes tareas:
 - Instalar nginx en ambos servidores
 - Copiar la página web personalizada
 - Asegurar que nginx esté corriendo
 
-### 4. Verificar la instalación
+### 3. Verificar la instalación
 
 Puedes verificar que nginx está funcionando correctamente en ambos nodos:
 
 ```bash
-curl http://localhost:2222
-curl http://localhost:2223
+curl http://localhost:8081
+curl http://localhost:8082
 ```
 
 O abrir en tu navegador:
-- http://localhost:2222
-- http://localhost:2223
+- http://localhost:8081 (node1)
+- http://localhost:8082 (node2)
 
-### 5. Detener los contenedores
+### 4. Detener los contenedores
 
 ```bash
 docker compose down
@@ -86,8 +113,8 @@ Los contenedores están configurados con:
 ### Inventario Ansible
 
 El archivo `inventory.ini` define dos hosts:
-- **node1**: accesible en localhost:2222
-- **node2**: accesible en localhost:2223
+- **node1**: SSH en localhost:2222, HTTP en localhost:8081
+- **node2**: SSH en localhost:2223, HTTP en localhost:8082
 
 Ambos configurados con:
 - Usuario SSH: ansible
